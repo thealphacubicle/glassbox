@@ -10,7 +10,7 @@ def is_gpu_available() -> bool:
         import cupy  # noqa: F401
 
         return True
-    except Exception:
+    except ImportError:
         pass
     try:  # xgboost GPU build
         import xgboost
