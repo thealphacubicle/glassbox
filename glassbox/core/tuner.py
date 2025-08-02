@@ -59,7 +59,10 @@ class ModelTuner:
         if self.tracker:
             self.tracker.finish()
         if self.dashboard:
-            json.dump([r.__dict__ for r in results], open(self.dashboard.state_path, "w"))
+
+        with open(self.dashboard.state_path, "w") as f:
+            json.dump([r.__dict__ for r in results], f)
+
         best = max(results, key=lambda r: r.metrics.get("score", 0.0))
         best_model = self.model.__class__(**{**self.model.get_params(), **best.params})
         best_model.fit(X, y)

@@ -22,13 +22,12 @@ def is_gpu_available() -> bool:
         info = getattr(xgboost, "build_info", lambda: {})()
         if isinstance(info, dict) and info.get("USE_CUDA", "") == "ON":
             return True
-    except Exception:
+    except (ImportError, AttributeError):
         pass
     try:  # lightgbm GPU
         import lightgbm  # noqa: F401
-
         return True
-    except Exception:
+    except ImportError:
         pass
     return False
 
