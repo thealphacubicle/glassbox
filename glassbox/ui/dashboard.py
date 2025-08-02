@@ -12,7 +12,7 @@ from ..utils.lazy_imports import optional_import
 class DashboardServer:
     """Launch a minimal dashboard visualising trial results.
 
-    The MVP implementation stores shared state in a JSON file on disk.  The
+    The MVP implementation stores the shared state in a JSON file on disk.  The
     dashboard, powered by Reflex or Streamlit, periodically refreshes and
     displays the leaderboard of trials.
     """

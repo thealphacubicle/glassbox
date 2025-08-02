@@ -6,11 +6,15 @@ from typing import Any
 
 def is_gpu_available() -> bool:
     """Best-effort check for GPU availability."""
-    try:  # CuPy
-        import cupy  # noqa: F401
+    try:  # PyTorch
+        import torch
 
-        return True
-    except ImportError:
+        if torch.cuda.is_available():
+            return True
+        mps = getattr(torch.backends, "mps", None)
+        if mps and getattr(mps, "is_available", lambda: False)():
+            return True
+    except Exception:
         pass
     try:  # xgboost GPU build
         import xgboost
@@ -22,7 +26,6 @@ def is_gpu_available() -> bool:
         pass
     try:  # lightgbm GPU
         import lightgbm  # noqa: F401
-
         return True
     except ImportError:
         pass

@@ -8,7 +8,7 @@ def test_is_gpu_available_false(monkeypatch):
     real_import = builtins.__import__
 
     def fake_import(name, *args, **kwargs):
-        if name in ("cupy", "xgboost", "lightgbm"):
+        if name in ("torch", "xgboost", "lightgbm"):
             raise ImportError
         return real_import(name, *args, **kwargs)
 

@@ -11,7 +11,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-gpu = ["xgboost", "lightgbm", "cupy"]
+gpu = ["xgboost", "lightgbm", "torch"]
 wandb = ["wandb"]
 ui = ["reflex"]
 optuna = ["optuna"]
