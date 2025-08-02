@@ -30,7 +30,8 @@ class DashboardServer:
         while True:
             if os.path.exists(self.state_path):
                 try:
-                    data = json.load(open(self.state_path))
+                    with open(self.state_path) as f:
+                        data = json.load(f)
                     df = pd.DataFrame(data)
                     placeholder.dataframe(df)
                 except Exception:
