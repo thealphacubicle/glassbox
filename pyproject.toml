@@ -1,0 +1,17 @@
+[project]
+name = "glassbox"
+version = "0.1.0"
+description = "Real-time observability for model training and hyperparameter tuning"
+authors = [{ name = "Your Name", email = "you@example.com" }]
+dependencies = [
+    "scikit-learn",
+    "numpy",
+    "pandas",
+    "tqdm"
+]
+
+[project.optional-dependencies]
+gpu = ["xgboost", "lightgbm", "cupy"]
+wandb = ["wandb"]
+ui = ["reflex"]
+optuna = ["optuna"]
