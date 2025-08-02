@@ -36,7 +36,13 @@ class ModelTuner:
         self.enable_gpu = enable_gpu
         self.logger = logging.getLogger(self.__class__.__name__)
         if not dashboard:
-            logging.basicConfig(level=logging.INFO)
+            if not self.logger.hasHandlers():
+                handler = logging.StreamHandler()
+                handler.setLevel(logging.INFO)
+                formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                handler.setFormatter(formatter)
+                self.logger.addHandler(handler)
+            self.logger.setLevel(logging.INFO)
 
         if enable_gpu:
             if not is_gpu_available():
