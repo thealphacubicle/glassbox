@@ -6,13 +6,13 @@ import random
 import time
 from dataclasses import dataclass
 import math
-import logging
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List
 
 from tqdm.auto import tqdm
 
 from .evaluator import evaluate
 from ..utils.lazy_imports import optional_import
+from ..logger import logger
 
 
 @dataclass
@@ -36,7 +36,6 @@ def grid_search(
     search_space: Dict[str, Iterable[Any]],
     *,
     show_progress: bool = False,
-    logger: Optional[logging.Logger] = None,
 ) -> List[TrialResult]:
     space_lists = {k: list(v) for k, v in search_space.items()}
     total = math.prod(len(v) for v in space_lists.values()) if space_lists else 0
@@ -51,14 +50,12 @@ def grid_search(
         trial_model.fit(X, y)
         score = evaluate(trial_model, X, y)
         duration = time.time() - start
-        if logger:
-            logger.info(
-                "Grid trial %s: params=%s score=%.4f duration=%.2fs",
-                i,
-                params,
-                score,
-                duration,
-            )
+        dest = ["console"] if show_progress else ["dashboard"]
+        logger.log(
+            "Grid trial %s: params=%s score=%.4f duration=%.2fs"
+            % (i, params, score, duration),
+            to=dest,
+        )
         results.append(TrialResult(i, params, {"score": score}, duration))
     return results
 
@@ -71,7 +68,6 @@ def random_search(
     n_trials: int = 10,
     *,
     show_progress: bool = False,
-    logger: Optional[logging.Logger] = None,
 ) -> List[TrialResult]:
     results: List[TrialResult] = []
     keys = list(search_space)
@@ -86,14 +82,12 @@ def random_search(
         trial_model.fit(X, y)
         score = evaluate(trial_model, X, y)
         duration = time.time() - start
-        if logger:
-            logger.info(
-                "Random trial %s: params=%s score=%.4f duration=%.2fs",
-                i,
-                params,
-                score,
-                duration,
-            )
+        dest = ["console"] if show_progress else ["dashboard"]
+        logger.log(
+            "Random trial %s: params=%s score=%.4f duration=%.2fs"
+            % (i, params, score, duration),
+            to=dest,
+        )
         results.append(TrialResult(i, params, {"score": score}, duration))
     return results
 
@@ -106,7 +100,6 @@ def optuna_search(
     n_trials: int = 10,
     *,
     show_progress: bool = False,
-    logger: Optional[logging.Logger] = None,
 ) -> List[TrialResult]:
     optuna = optional_import("optuna")
 
@@ -122,14 +115,12 @@ def optuna_search(
         trial_model.fit(X, y)
         score = evaluate(trial_model, X, y)
         duration = time.time() - start
-        if logger:
-            logger.info(
-                "Optuna trial %s: params=%s score=%.4f duration=%.2fs",
-                trial.number,
-                params,
-                score,
-                duration,
-            )
+        dest = ["console"] if show_progress else ["dashboard"]
+        logger.log(
+            "Optuna trial %s: params=%s score=%.4f duration=%.2fs"
+            % (trial.number, params, score, duration),
+            to=dest,
+        )
         if pbar:
             pbar.update(1)
         results.append(TrialResult(trial.number, params, {"score": score}, duration))

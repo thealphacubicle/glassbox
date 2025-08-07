@@ -6,6 +6,7 @@ from sklearn.model_selection import train_test_split
 from xgboost import XGBClassifier
 
 from glassbox import ModelTuner
+from glassbox.logger import logger
 
 
 X, y = load_iris(return_X_y=True)
@@ -20,4 +21,4 @@ tuner = ModelTuner(
 )
 
 best_model = tuner.search(X_train, y_train, time_limit="10m")
-print("Best score:", best_model.score(X_test, y_test))
+logger.log(f"Best score: {best_model.score(X_test, y_test)}")

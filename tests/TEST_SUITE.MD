@@ -12,3 +12,5 @@ This directory contains unit tests for the glassbox MVP package.
 | `test_wandb_tracker.py` | Uses a dummy W&B client to verify tracking calls. |
 | `test_dashboard.py` | Verifies the dashboard server requires the UI dependency. |
 | `test_config.py` | Confirms default search spaces are populated for key models. |
+| `test_logger.py` | Checks the unified logger routes messages to console and dashboard. |
+| `test_plugins.py` | Ensures plugin hooks execute and the KnockNotifier handles missing dependencies. |
