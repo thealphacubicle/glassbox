@@ -2,13 +2,14 @@
 name = "glassbox"
 version = "0.1.0"
 description = "Real-time observability for model training and hyperparameter tuning"
-authors = ["Your Name <you@example.com>"]
-license = "MIT"
+authors = ["Srihari Raman Name <thealphacubicle.dev@gmail.com>"]
+license = "Apache 2.0"
 readme = "README.md"
 packages = [{ include = "glassbox" }]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.10",
     "Operating System :: OS Independent",
 ]
 
