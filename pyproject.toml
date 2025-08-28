@@ -7,7 +7,8 @@ dependencies = [
     "scikit-learn",
     "numpy",
     "pandas",
-    "tqdm"
+    "tqdm",
+    "pydantic"
 ]
 
 [project.optional-dependencies]

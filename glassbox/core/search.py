@@ -4,130 +4,130 @@ from __future__ import annotations
 import itertools
 import random
 import time
-from dataclasses import dataclass
 import math
-from typing import Any, Dict, Iterable, List
+from typing import Any, Callable, Dict, Iterable, List
 
 from tqdm.auto import tqdm
 
-from .evaluator import evaluate
+from ..schemas import Evaluator, TrialResult
 from ..utils.lazy_imports import optional_import
 from ..logger import logger
 
 
-@dataclass
-class TrialResult:
-    trial_id: int
-    params: Dict[str, Any]
-    metrics: Dict[str, float]
-    duration: float
+class Search:
+    """Encapsulates different hyperparameter search strategies."""
 
+    def __init__(
+        self,
+        strategy: str,
+        search_space: Dict[str, Iterable[Any]],
+        *,
+        n_trials: int = 10,
+        name: str | None = None,
+    ) -> None:
+        if not search_space:
+            raise ValueError("search_space must be provided")
+        self.strategy = strategy
+        self.search_space = {k: list(v) for k, v in search_space.items()}
+        self.n_trials = n_trials
+        self.name = name or strategy
+        self._strategies: Dict[str, Callable[[Any, Any, Any, Evaluator, bool], List[TrialResult]]] = {
+            "grid": self._grid_search,
+            "random": self._random_search,
+            "optuna": self._optuna_search,
+        }
+        if strategy not in self._strategies:
+            raise ValueError(f"Unknown search strategy: {strategy}")
 
-def _iterate_grid(search_space: Dict[str, Iterable[Any]]):
-    keys = list(search_space)
-    for values in itertools.product(*(search_space[k] for k in keys)):
-        yield dict(zip(keys, values))
+    def run(self, model, X, y, evaluator: Evaluator, show_progress: bool = False) -> List[TrialResult]:
+        return self._strategies[self.strategy](model, X, y, evaluator, show_progress)
 
+    # ------------------------------------------------------------------
+    # Strategy implementations
+    # ------------------------------------------------------------------
+    def _iterate_grid(self):
+        keys = list(self.search_space)
+        for values in itertools.product(*(self.search_space[k] for k in keys)):
+            yield dict(zip(keys, values))
 
-def grid_search(
-    model,
-    X,
-    y,
-    search_space: Dict[str, Iterable[Any]],
-    *,
-    show_progress: bool = False,
-) -> List[TrialResult]:
-    space_lists = {k: list(v) for k, v in search_space.items()}
-    total = math.prod(len(v) for v in space_lists.values()) if space_lists else 0
-    iterator = enumerate(_iterate_grid(space_lists), 1)
-    if show_progress:
-        iterator = tqdm(iterator, total=total, desc="Grid Search")
+    def _grid_search(self, model, X, y, evaluator: Evaluator, show_progress: bool) -> List[TrialResult]:
+        total = math.prod(len(v) for v in self.search_space.values()) if self.search_space else 0
+        iterator = enumerate(self._iterate_grid(), 1)
+        if show_progress:
+            iterator = tqdm(iterator, total=total, desc=f"{self.name} Search")
+        results: List[TrialResult] = []
+        for i, params in iterator:
+            trial_model = model.__class__(**{**model.get_params(), **params})
+            start = time.time()
+            trial_model.fit(X, y)
+            score = evaluator.evaluate(trial_model, X, y)
+            duration = time.time() - start
+            dest = ["console"] if show_progress else ["dashboard"]
+            logger.log(
+                f"{self.name.capitalize()} trial {i}: params={params} score={score:.4f} duration={duration:.2f}s",
+                to=dest,
+            )
+            results.append(
+                TrialResult(trial_id=i, params=params, metrics={"score": score}, duration=duration)
+            )
+        return results
 
-    results: List[TrialResult] = []
-    for i, params in iterator:
-        trial_model = model.__class__(**{**model.get_params(), **params})
-        start = time.time()
-        trial_model.fit(X, y)
-        score = evaluate(trial_model, X, y)
-        duration = time.time() - start
-        dest = ["console"] if show_progress else ["dashboard"]
-        logger.log(
-            "Grid trial %s: params=%s score=%.4f duration=%.2fs"
-            % (i, params, score, duration),
-            to=dest,
-        )
-        results.append(TrialResult(i, params, {"score": score}, duration))
-    return results
+    def _random_search(self, model, X, y, evaluator: Evaluator, show_progress: bool) -> List[TrialResult]:
+        keys = list(self.search_space)
+        iterator = range(1, self.n_trials + 1)
+        if show_progress:
+            iterator = tqdm(iterator, total=self.n_trials, desc=f"{self.name} Search")
+        results: List[TrialResult] = []
+        for i in iterator:
+            params = {k: random.choice(self.search_space[k]) for k in keys}
+            trial_model = model.__class__(**{**model.get_params(), **params})
+            start = time.time()
+            trial_model.fit(X, y)
+            score = evaluator.evaluate(trial_model, X, y)
+            duration = time.time() - start
+            dest = ["console"] if show_progress else ["dashboard"]
+            logger.log(
+                f"{self.name.capitalize()} trial {i}: params={params} score={score:.4f} duration={duration:.2f}s",
+                to=dest,
+            )
+            results.append(
+                TrialResult(trial_id=i, params=params, metrics={"score": score}, duration=duration)
+            )
+        return results
 
+    def _optuna_search(self, model, X, y, evaluator: Evaluator, show_progress: bool) -> List[TrialResult]:
+        optuna = optional_import("optuna")
+        results: List[TrialResult] = []
+        pbar = tqdm(total=self.n_trials, desc=f"{self.name} Search") if show_progress else None
 
-def random_search(
-    model,
-    X,
-    y,
-    search_space: Dict[str, Iterable[Any]],
-    n_trials: int = 10,
-    *,
-    show_progress: bool = False,
-) -> List[TrialResult]:
-    results: List[TrialResult] = []
-    keys = list(search_space)
-    iterator = range(1, n_trials + 1)
-    if show_progress:
-        iterator = tqdm(iterator, total=n_trials, desc="Random Search")
+        def objective(trial):
+            params = {}
+            for name, values in self.search_space.items():
+                params[name] = trial.suggest_categorical(name, list(values))
+            trial_model = model.__class__(**{**model.get_params(), **params})
+            start = time.time()
+            trial_model.fit(X, y)
+            score = evaluator.evaluate(trial_model, X, y)
+            duration = time.time() - start
+            dest = ["console"] if show_progress else ["dashboard"]
+            logger.log(
+                f"{self.name.capitalize()} trial {trial.number}: params={params} score={score:.4f} duration={duration:.2f}s",
+                to=dest,
+            )
+            if pbar:
+                pbar.update(1)
+            results.append(
+                TrialResult(
+                    trial_id=trial.number,
+                    params=params,
+                    metrics={"score": score},
+                    duration=duration,
+                )
+            )
+            return score
 
-    for i in iterator:
-        params = {k: random.choice(list(search_space[k])) for k in keys}
-        trial_model = model.__class__(**{**model.get_params(), **params})
-        start = time.time()
-        trial_model.fit(X, y)
-        score = evaluate(trial_model, X, y)
-        duration = time.time() - start
-        dest = ["console"] if show_progress else ["dashboard"]
-        logger.log(
-            "Random trial %s: params=%s score=%.4f duration=%.2fs"
-            % (i, params, score, duration),
-            to=dest,
-        )
-        results.append(TrialResult(i, params, {"score": score}, duration))
-    return results
-
-
-def optuna_search(
-    model,
-    X,
-    y,
-    search_space: Dict[str, Iterable[Any]],
-    n_trials: int = 10,
-    *,
-    show_progress: bool = False,
-) -> List[TrialResult]:
-    optuna = optional_import("optuna")
-
-    results: List[TrialResult] = []
-    pbar = tqdm(total=n_trials, desc="Optuna Search") if show_progress else None
-
-    def objective(trial):
-        params = {}
-        for name, values in search_space.items():
-            params[name] = trial.suggest_categorical(name, list(values))
-        trial_model = model.__class__(**{**model.get_params(), **params})
-        start = time.time()
-        trial_model.fit(X, y)
-        score = evaluate(trial_model, X, y)
-        duration = time.time() - start
-        dest = ["console"] if show_progress else ["dashboard"]
-        logger.log(
-            "Optuna trial %s: params=%s score=%.4f duration=%.2fs"
-            % (trial.number, params, score, duration),
-            to=dest,
-        )
+        study = optuna.create_study(direction="maximize")
+        study.optimize(objective, n_trials=self.n_trials)
         if pbar:
-            pbar.update(1)
-        results.append(TrialResult(trial.number, params, {"score": score}, duration))
-        return score
-
-    study = optuna.create_study(direction="maximize")
-    study.optimize(objective, n_trials=n_trials)
-    if pbar:
-        pbar.close()
-    return results
+            pbar.close()
+        return results

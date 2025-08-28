@@ -3,7 +3,14 @@ from __future__ import annotations
 
 from typing import Any
 
+from ..schemas import Evaluator
 
-def evaluate(model: Any, X, y) -> float:
-    """Evaluate *model* on the provided data using ``model.score``."""
-    return float(model.score(X, y))
+
+class SklearnEvaluator(Evaluator):
+    """Default evaluator using ``model.score`` from scikit-learn models."""
+
+    def __init__(self, name: str = "sklearn") -> None:
+        super().__init__(name)
+
+    def evaluate(self, model: Any, X, y) -> float:
+        return float(model.score(X, y))
