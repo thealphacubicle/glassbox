@@ -3,16 +3,17 @@ from __future__ import annotations
 
 import itertools
 import random
-import time
 import math
+from time import perf_counter
 from typing import Any, Callable, Dict, Iterable, List, Optional
 
-from tqdm.auto import tqdm
+from rich.console import Console
+from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
 
-from ..schemas import Evaluator, TrialResult
-from ..utils.lazy_imports import optional_import
-from ..logger import logger
-from ..plugins.manager import PluginManager
+from glassbox.schemas import Evaluator, TrialResult
+from glassbox.utils.lazy_imports import optional_import
+from glassbox.logger import logger
+from glassbox.plugins.manager import PluginManager
 
 
 class Search:
@@ -82,25 +83,26 @@ class Search:
         plugin_manager: PluginManager | None,
     ) -> List[TrialResult]:
         total = math.prod(len(v) for v in self.search_space.values()) if self.search_space else 0
-        pbar = (
-            tqdm(
-                total=total,
-                desc=f"{self.name} Search",
-                dynamic_ncols=True,
-                bar_format="{l_bar}{bar} {n_fmt}/{total_fmt}",
+        progress: Progress | None = None
+        task_id: int | None = None
+        if show_progress:
+            progress = Progress(
+                TextColumn("{task.description}"),
+                BarColumn(),
+                TextColumn("{task.completed}/{task.total}"),
+                console=Console(stderr=True),
             )
-            if show_progress
-            else None
-        )
+            progress.start()
+            task_id = progress.add_task(f"{self.name} Search", total=total)
         results: List[TrialResult] = []
         for i, params in enumerate(self._iterate_grid(), 1):
             trial_model = model.__class__(**{**model.get_params(), **params})
-            start = time.time()
+            start = perf_counter()
             trial_model.fit(X, y)
             score = evaluator.evaluate(trial_model, X, y)
-            duration = time.time() - start
-            if pbar:
-                pbar.update(1)
+            duration = perf_counter() - start
+            if progress and task_id is not None:
+                progress.update(task_id, advance=1)
             logger.log(
                 f"{self.name.capitalize()} trial {i}: params={params} score={score:.4f} duration={duration:.2f}s",
                 to=["console"],
@@ -110,8 +112,8 @@ class Search:
             results.append(
                 TrialResult(trial_id=i, params=params, metrics={"score": score}, duration=duration)
             )
-        if pbar:
-            pbar.close()
+        if progress:
+            progress.stop()
         return results
 
     def _random_search(
@@ -124,26 +126,27 @@ class Search:
         plugin_manager: PluginManager | None,
     ) -> List[TrialResult]:
         keys = list(self.search_space)
-        pbar = (
-            tqdm(
-                total=self.n_trials,
-                desc=f"{self.name} Search",
-                dynamic_ncols=True,
-                bar_format="{l_bar}{bar} {n_fmt}/{total_fmt}",
+        progress: Progress | None = None
+        task_id: int | None = None
+        if show_progress:
+            progress = Progress(
+                TextColumn("{task.description}"),
+                BarColumn(),
+                TextColumn("{task.completed}/{task.total}"),
+                console=Console(stderr=True),
             )
-            if show_progress
-            else None
-        )
+            progress.start()
+            task_id = progress.add_task(f"{self.name} Search", total=self.n_trials)
         results: List[TrialResult] = []
         for i in range(1, self.n_trials + 1):
             params = {k: random.choice(self.search_space[k]) for k in keys}
             trial_model = model.__class__(**{**model.get_params(), **params})
-            start = time.time()
+            start = perf_counter()
             trial_model.fit(X, y)
             score = evaluator.evaluate(trial_model, X, y)
-            duration = time.time() - start
-            if pbar:
-                pbar.update(1)
+            duration = perf_counter() - start
+            if progress and task_id is not None:
+                progress.update(task_id, advance=1)
             logger.log(
                 f"{self.name.capitalize()} trial {i}: params={params} score={score:.4f} duration={duration:.2f}s",
                 to=["console"],
@@ -153,8 +156,8 @@ class Search:
             results.append(
                 TrialResult(trial_id=i, params=params, metrics={"score": score}, duration=duration)
             )
-        if pbar:
-            pbar.close()
+        if progress:
+            progress.stop()
         return results
 
     def _optuna_search(
@@ -168,34 +171,34 @@ class Search:
     ) -> List[TrialResult]:
         optuna = optional_import("optuna")
         results: List[TrialResult] = []
-        spinner = itertools.cycle("⠋⠙⠚⠞⠖⠦⠴⠲⠳⠓")
-        pbar = (
-            tqdm(
-                total=self.n_trials,
-                desc=f"{self.name} Search",
-                dynamic_ncols=True,
-                bar_format="{l_bar}{bar} {n_fmt}/{total_fmt} {postfix}",
+        progress: Progress | None = None
+        task_id: int | None = None
+        if show_progress:
+            progress = Progress(
+                SpinnerColumn(),
+                TextColumn("{task.description}"),
+                BarColumn(),
+                TextColumn("{task.completed}/{task.total}"),
+                console=Console(stderr=True),
             )
-            if show_progress
-            else None
-        )
+            progress.start()
+            task_id = progress.add_task(f"{self.name} Search", total=self.n_trials)
 
         def objective(trial):
             params = {}
             for name, values in self.search_space.items():
                 params[name] = trial.suggest_categorical(name, list(values))
             trial_model = model.__class__(**{**model.get_params(), **params})
-            start = time.time()
+            start = perf_counter()
             trial_model.fit(X, y)
             score = evaluator.evaluate(trial_model, X, y)
-            duration = time.time() - start
+            duration = perf_counter() - start
             logger.log(
                 f"{self.name.capitalize()} trial {trial.number}: params={params} score={score:.4f} duration={duration:.2f}s",
                 to=["console"],
             )
-            if pbar:
-                pbar.update(1)
-                pbar.set_postfix_str(next(spinner))
+            if progress and task_id is not None:
+                progress.update(task_id, advance=1)
             if plugin_manager:
                 plugin_manager.trigger("on_epoch_end", metrics={"score": score})
             results.append(
@@ -210,6 +213,6 @@ class Search:
 
         study = optuna.create_study(direction="maximize")
         study.optimize(objective, n_trials=self.n_trials)
-        if pbar:
-            pbar.close()
+        if progress:
+            progress.stop()
         return results

@@ -3,12 +3,12 @@ from __future__ import annotations
 
 from typing import Any, List
 
-from ..plugins import Plugin, PluginManager
-from ..tracking.wandb_tracker import WandbTracker
-from ..utils.gpu import is_gpu_available, supports_gpu
-from ..logger import logger
-from .search import Search
-from ..schemas import Evaluator
+from glassbox.plugins import Plugin, PluginManager
+from glassbox.tracking.wandb_tracker import WandbTracker
+from glassbox.utils.gpu import is_gpu_available, supports_gpu
+from glassbox.logger import logger
+from glassbox.core.search import Search
+from glassbox.schemas import Evaluator
 
 
 class ModelSearch:
@@ -34,7 +34,7 @@ class ModelSearch:
         self.verbose = verbose
         self.show_progress = show_progress
         self.plugin_manager = PluginManager()
-        for plugin in plugins or [Plugin()]:
+        for plugin in (plugins or [Plugin()]):
             self.plugin_manager.register(plugin)
 
         logger.set_verbose(verbose)

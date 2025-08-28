@@ -5,7 +5,7 @@
 ## Features
 - Unified `ModelSearch` API for grid, random and Optuna-powered searches
 - Optional Weights & Biases tracking
-- Enhanced TQDM progress bars with spinner flair
+- Rich progress bars with spinner flair
 - Unified `GlassboxLogger` routing messages to console and W&B
 - Extensible plugin system with lifecycle hooks (e.g., Telegram notifications)
 - GPU environment checks and model capability detection
@@ -22,6 +22,12 @@ Optional extras can be installed as needed:
 pip install glassbox[gpu]      # GPU libraries
 pip install glassbox[wandb]    # Weights & Biases tracking
 pip install glassbox[optuna]   # Optuna search backend
+```
+
+For development, use [Poetry](https://python-poetry.org/) to install dependencies:
+
+```bash
+poetry install
 ```
 
 ## Quick start

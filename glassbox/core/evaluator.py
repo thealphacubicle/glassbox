@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..schemas import Evaluator
+from glassbox.schemas import Evaluator
 
 
 class SklearnEvaluator(Evaluator):
