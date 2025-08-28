@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from ..utils.lazy_imports import optional_import
+from glassbox.utils.lazy_imports import optional_import
 
 
 class WandbTracker:

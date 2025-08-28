@@ -1,17 +1,34 @@
-[project]
+[tool.poetry]
 name = "glassbox"
 version = "0.1.0"
 description = "Real-time observability for model training and hyperparameter tuning"
-authors = [{ name = "Your Name", email = "you@example.com" }]
-dependencies = [
-    "scikit-learn",
-    "numpy",
-    "pandas",
-    "tqdm",
-    "pydantic",
+authors = ["Srihari Raman Name <thealphacubicle.dev@gmail.com>"]
+license = "Apache 2.0"
+readme = "README.md"
+packages = [{ include = "glassbox" }]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.10",
+    "Operating System :: OS Independent",
 ]
 
-[project.optional-dependencies]
+[tool.poetry.dependencies]
+python = "^3.10"
+scikit-learn = "*"
+numpy = "*"
+pandas = "*"
+pydantic = "*"
+rich = "*"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "*"
+
+[tool.poetry.extras]
 gpu = ["xgboost", "lightgbm", "torch"]
 wandb = ["wandb"]
 optuna = ["optuna"]
+
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
