@@ -10,6 +10,7 @@
 - Extensible plugin system with lifecycle hooks (e.g., Telegram notifications)
 - GPU environment checks and model capability detection
 - Lazy import helpers to keep dependencies optional
+- Verbose mode to silence console logging unless explicitly enabled
 
 ## Installation
 ```bash
@@ -36,7 +37,7 @@ X, y = load_iris(return_X_y=True)
 X_train, X_test, y_train, y_test = train_test_split(X, y)
 
 search = Search("grid", {"C": [0.1, 1.0]})
-ms = ModelSearch(LogisticRegression(max_iter=100), search, SklearnEvaluator())
+ms = ModelSearch(LogisticRegression(max_iter=100), search, SklearnEvaluator(), verbose=True)
 model = ms.search(X_train, y_train)
 print("accuracy", model.score(X_test, y_test))
 ```

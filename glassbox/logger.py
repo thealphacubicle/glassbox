@@ -10,8 +10,14 @@ class GlassboxLogger:
     def __init__(
         self,
         use_wandb: bool = False,
+        verbose: bool = True,
     ) -> None:
         self.use_wandb = use_wandb
+        self.verbose = verbose
+
+    def set_verbose(self, verbose: bool) -> None:
+        """Globally enable or disable non-error logging."""
+        self.verbose = verbose
 
     def log(self, message: str, level: str = "info", to: Iterable[str] | None = None) -> None:
         """Log a message to the selected destinations.
@@ -27,6 +33,10 @@ class GlassboxLogger:
             Iterable of destinations. Supported values: ``"console"`` or
             ``"wandb"``.
         """
+
+        # Skip non-error logs when verbosity is disabled
+        if not self.verbose and level.lower() != "error":
+            return
 
         destinations: List[str] = list(to) if to is not None else ["console"]
 

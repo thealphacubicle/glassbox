@@ -27,6 +27,7 @@ class Search:
         name: str | None = None,
     ) -> None:
         if not search_space:
+            logger.log("search_space must be provided", level="error")
             raise ValueError("search_space must be provided")
         self.strategy = strategy
         self.search_space = {k: list(v) for k, v in search_space.items()}
@@ -41,6 +42,7 @@ class Search:
             "optuna": self._optuna_search,
         }
         if strategy not in self._strategies:
+            logger.log(f"Unknown search strategy: {strategy}", level="error")
             raise ValueError(f"Unknown search strategy: {strategy}")
 
     def run(

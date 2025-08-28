@@ -27,6 +27,7 @@ ms = ModelSearch(
     tracking="wandb",
     enable_gpu=True,
     plugins=[ResourceMonitor()],
+    verbose=True,
 )
 
 best_model = ms.search(X_train, y_train)

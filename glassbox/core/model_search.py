@@ -23,20 +23,26 @@ class ModelSearch:
         *,
         tracking: str | None = None,
         enable_gpu: bool = False,
+        verbose: bool = False,
     ) -> None:
         self.model = model
         self.searcher = search
         self.evaluator = evaluator
         self.tracker = WandbTracker() if tracking == "wandb" else None
         self.enable_gpu = enable_gpu
+        self.verbose = verbose
         self.plugin_manager = PluginManager()
         for plugin in plugins or [Plugin()]:
             self.plugin_manager.register(plugin)
 
+        logger.set_verbose(verbose)
+
         if enable_gpu:
             if not is_gpu_available():
+                logger.log("GPU requested but none detected", level="error")
                 raise RuntimeError("GPU requested but none detected")
             if not supports_gpu(model):
+                logger.log("Model does not appear to support GPU", level="error")
                 raise RuntimeError("Model does not appear to support GPU")
 
     def search(self, X, y):
@@ -48,7 +54,7 @@ class ModelSearch:
             X,
             y,
             evaluator=self.evaluator,
-            show_progress=True,
+            show_progress=self.verbose,
             plugin_manager=self.plugin_manager,
         )
         for res in results:

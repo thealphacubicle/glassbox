@@ -18,12 +18,13 @@ def test_model_search_runs():
         LogisticRegression(max_iter=50),
         Search("grid", SEARCH_SPACE),
         SklearnEvaluator(),
+        verbose=True,
     )
     model = ms.search(X_train, y_train)
     assert model.score(X_test, y_test) >= 0
 
 
-def test_model_search_gpu_guard(monkeypatch):
+def test_model_search_gpu_guard(monkeypatch, capsys):
     monkeypatch.setattr(ms_module, "is_gpu_available", lambda: False)
     with pytest.raises(RuntimeError):
         ModelSearch(
@@ -31,4 +32,9 @@ def test_model_search_gpu_guard(monkeypatch):
             Search("grid", SEARCH_SPACE),
             SklearnEvaluator(),
             enable_gpu=True,
+            verbose=False,
         )
+    out = capsys.readouterr().out
+    assert "GPU requested but none detected" in out
+    from glassbox.logger import logger as global_logger
+    global_logger.set_verbose(True)

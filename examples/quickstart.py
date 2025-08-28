@@ -15,7 +15,12 @@ X, y = load_iris(return_X_y=True)
 X_train, X_test, y_train, y_test = train_test_split(X, y)
 
 search = Search("grid", {"C": [0.1, 1.0]})
-ms = ModelSearch(model=LogisticRegression(max_iter=200), search=search, evaluator=SklearnEvaluator())
+ms = ModelSearch(
+    model=LogisticRegression(max_iter=200),
+    search=search,
+    evaluator=SklearnEvaluator(),
+    verbose=True,
+)
 
 best_model = ms.search(X_train, y_train)
 logger.log(f"Best score: {best_model.score(X_test, y_test)}")
