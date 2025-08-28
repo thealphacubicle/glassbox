@@ -8,21 +8,23 @@ from glassbox.core.evaluator import SklearnEvaluator
 from glassbox.logger import logger
 
 
-from sklearn.datasets import make_classification
-from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.datasets import load_iris
+from sklearn.linear_model import LogisticRegression
 
-# Generate a larger synthetic dataset
-X, y = make_classification(n_samples=10000, n_features=20, n_informative=15, n_redundant=5, random_state=42)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+# Use a simpler dataset
+X, y = load_iris(return_X_y=True)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Update the search space and model to be more complex
+# Simplify the search space and model
 search = Search("grid", {
-    "n_estimators": [100, 200, 300],
-    "max_depth": [5, 10, 15],
-    "learning_rate": [0.01, 0.1, 0.2]
+    "C": [0.1, 1.0, 10.0],
+    "solver": ["lbfgs"],
+    "penalty": ["l2"],
+    "tol": [1e-4, 1e-3],
+    "max_iter": [100, 200]
 })
 ms = ModelSearch(
-    model=GradientBoostingClassifier(),
+    model=LogisticRegression(),
     search=search,
     evaluator=SklearnEvaluator(),
     verbose=False,
