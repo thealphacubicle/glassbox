@@ -6,6 +6,8 @@
 - Unified `ModelTuner` API for grid, random and Optuna-powered searches
 - Optional Weights & Biases tracking
 - Lightweight dashboard powered by Streamlit/Reflex
+- Unified `GlassboxLogger` routing messages to console, W&B, and dashboard
+- Extensible plugin system with lifecycle hooks (e.g., Telegram notifications)
 - GPU environment checks and model capability detection
 - Lazy import helpers to keep dependencies optional
 
@@ -38,6 +40,24 @@ print("accuracy", model.score(X_test, y_test))
 ```
 
 See [examples/run_xgboost.py](glassbox/examples/run_xgboost.py) for an Optuna-based workflow with optional tracking and dashboard support.
+
+## Logging and Plugins
+
+Use the global `logger` to route messages to different destinations and extend training with plugins:
+
+```python
+from glassbox.logger import logger
+from glassbox.plugins.manager import PluginManager
+from glassbox.plugins.knocknotifier import KnockNotifier
+
+plugin_manager = PluginManager()
+plugin_manager.register(KnockNotifier(telegram_token="your-token", chat_id=123456))
+
+logger.log("Training started", to=["console", "wandb"])
+plugin_manager.trigger("on_training_start")
+```
+
+Plugins listen to lifecycle hooks and should avoid blocking training. The included `KnockNotifier` sends a Telegram message when training completes if the `knockknock` package is installed.
 
 ## Testing
 To run the project test suite:
