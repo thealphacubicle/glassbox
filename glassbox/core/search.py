@@ -82,13 +82,12 @@ class Search:
         plugin_manager: PluginManager | None,
     ) -> List[TrialResult]:
         total = math.prod(len(v) for v in self.search_space.values()) if self.search_space else 0
-        spinner = itertools.cycle("⠋⠙⠚⠞⠖⠦⠴⠲⠳⠓")
         pbar = (
             tqdm(
                 total=total,
                 desc=f"{self.name} Search",
                 dynamic_ncols=True,
-                bar_format="{l_bar}{bar} {n_fmt}/{total_fmt} {postfix}",
+                bar_format="{l_bar}{bar} {n_fmt}/{total_fmt}",
             )
             if show_progress
             else None
@@ -102,7 +101,6 @@ class Search:
             duration = time.time() - start
             if pbar:
                 pbar.update(1)
-                pbar.set_postfix_str(next(spinner))
             logger.log(
                 f"{self.name.capitalize()} trial {i}: params={params} score={score:.4f} duration={duration:.2f}s",
                 to=["console"],
@@ -126,13 +124,12 @@ class Search:
         plugin_manager: PluginManager | None,
     ) -> List[TrialResult]:
         keys = list(self.search_space)
-        spinner = itertools.cycle("⠋⠙⠚⠞⠖⠦⠴⠲⠳⠓")
         pbar = (
             tqdm(
                 total=self.n_trials,
                 desc=f"{self.name} Search",
                 dynamic_ncols=True,
-                bar_format="{l_bar}{bar} {n_fmt}/{total_fmt} {postfix}",
+                bar_format="{l_bar}{bar} {n_fmt}/{total_fmt}",
             )
             if show_progress
             else None
@@ -147,7 +144,6 @@ class Search:
             duration = time.time() - start
             if pbar:
                 pbar.update(1)
-                pbar.set_postfix_str(next(spinner))
             logger.log(
                 f"{self.name.capitalize()} trial {i}: params={params} score={score:.4f} duration={duration:.2f}s",
                 to=["console"],
