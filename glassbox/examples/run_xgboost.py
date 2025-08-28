@@ -9,6 +9,7 @@ from glassbox import ModelSearch
 from glassbox.core.search import Search
 from glassbox.core.evaluator import SklearnEvaluator
 from glassbox.logger import logger
+from glassbox.plugins import ResourceMonitor
 
 
 X, y = load_iris(return_X_y=True)
@@ -24,8 +25,8 @@ ms = ModelSearch(
     search=search,
     evaluator=SklearnEvaluator(),
     tracking="wandb",
-    dashboard=True,
     enable_gpu=True,
+    plugins=[ResourceMonitor()],
 )
 
 best_model = ms.search(X_train, y_train)

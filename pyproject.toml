@@ -8,11 +8,10 @@ dependencies = [
     "numpy",
     "pandas",
     "tqdm",
-    "pydantic"
+    "pydantic",
 ]
 
 [project.optional-dependencies]
 gpu = ["xgboost", "lightgbm", "torch"]
 wandb = ["wandb"]
-ui = ["reflex"]
 optuna = ["optuna"]

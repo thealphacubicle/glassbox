@@ -1,7 +1,6 @@
 """High-level ModelSearch API."""
 from __future__ import annotations
 
-import json
 from typing import Any, List
 
 from ..plugins import Plugin, PluginManager
@@ -23,14 +22,12 @@ class ModelSearch:
         plugins: List[Plugin] | None = None,
         *,
         tracking: str | None = None,
-        dashboard: bool = False,
         enable_gpu: bool = False,
     ) -> None:
         self.model = model
         self.searcher = search
         self.evaluator = evaluator
         self.tracker = WandbTracker() if tracking == "wandb" else None
-        self.dashboard = dashboard
         self.enable_gpu = enable_gpu
         self.plugin_manager = PluginManager()
         for plugin in plugins or [Plugin()]:
@@ -46,20 +43,22 @@ class ModelSearch:
         if self.tracker:
             self.tracker.start({"strategy": self.searcher.name})
         self.plugin_manager.trigger("on_training_start")
-        show_progress = not self.dashboard
-        results = self.searcher.run(self.model, X, y, evaluator=self.evaluator, show_progress=show_progress)
+        results = self.searcher.run(
+            self.model,
+            X,
+            y,
+            evaluator=self.evaluator,
+            show_progress=True,
+            plugin_manager=self.plugin_manager,
+        )
         for res in results:
             if self.tracker:
                 self.tracker.log(res.trial_id, res.metrics)
         if self.tracker:
             self.tracker.finish()
         self.plugin_manager.trigger("on_training_end")
-        if self.dashboard:
-            with open(logger.state_path, "w") as f:
-                json.dump([r.model_dump() for r in results], f)
         best = max(results, key=lambda r: r.metrics.get("score", 0.0))
-        if show_progress:
-            logger.log(f"Best trial {best.trial_id} with params {best.params}")
+        logger.log(f"Best trial {best.trial_id} with params {best.params}")
         best_model = self.model.__class__(**{**self.model.get_params(), **best.params})
         best_model.fit(X, y)
         return best_model

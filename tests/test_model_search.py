@@ -1,6 +1,4 @@
 import pytest
-import pytest
-import pytest
 from sklearn.linear_model import LogisticRegression
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
@@ -34,19 +32,3 @@ def test_model_search_gpu_guard(monkeypatch):
             SklearnEvaluator(),
             enable_gpu=True,
         )
-
-
-def test_model_search_writes_dashboard_state(tmp_path, monkeypatch):
-    X, y = load_iris(return_X_y=True)
-    X_train, _, y_train, _ = train_test_split(X, y, random_state=0)
-    state_file = tmp_path / "state.json"
-    monkeypatch.setattr(ms_module.logger, "state_path", str(state_file))
-    monkeypatch.setattr(ms_module.logger, "use_dashboard", True)
-    ms = ModelSearch(
-        LogisticRegression(max_iter=50),
-        Search("grid", SEARCH_SPACE),
-        SklearnEvaluator(),
-        dashboard=True,
-    )
-    ms.search(X_train, y_train)
-    assert state_file.exists()

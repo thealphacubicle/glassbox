@@ -34,7 +34,7 @@ def test_optuna_search_requires_optuna(monkeypatch):
         s.run(MODEL, X, y, EVALUATOR)
 
 
-def test_grid_search_logs_to_dashboard(monkeypatch):
+def test_grid_search_logs_to_console(monkeypatch):
     calls = []
     monkeypatch.setattr(
         search_module.logger,
@@ -43,4 +43,4 @@ def test_grid_search_logs_to_dashboard(monkeypatch):
     )
     s = Search("grid", SEARCH_SPACE)
     s.run(MODEL, X, y, EVALUATOR)
-    assert calls and calls[0] == ["dashboard"]
+    assert calls and calls[0] == ["console"]

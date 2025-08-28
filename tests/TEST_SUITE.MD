@@ -10,6 +10,5 @@ This directory contains unit tests for the glassbox MVP package.
 | `test_search.py` | Exercises grid and random search strategies and verifies Optuna integration is optional. |
 | `test_model_search.py` | Checks that the high-level `ModelSearch` orchestrates searches and enforces GPU guards. |
 | `test_wandb_tracker.py` | Uses a dummy W&B client to verify tracking calls. |
-| `test_dashboard.py` | Verifies the dashboard server requires the UI dependency. |
-| `test_logger.py` | Checks the unified logger routes messages to console and dashboard. |
-| `test_plugins.py` | Ensures plugin hooks execute and the KnockNotifier handles missing dependencies. |
+| `test_logger.py` | Checks the unified logger routes messages to the console. |
+| `test_plugins.py` | Ensures plugin hooks execute, the KnockNotifier handles missing dependencies, and the ResourceMonitor reports memory. |
