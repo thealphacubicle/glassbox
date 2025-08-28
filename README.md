@@ -10,7 +10,7 @@
 - Extensible plugin system with lifecycle hooks (e.g., Telegram notifications)
 - GPU environment checks and model capability detection
 - Lazy import helpers to keep dependencies optional
-- Verbose mode to silence console logging unless explicitly enabled
+- Verbose mode to silence console logging unless explicitly enabled (progress bars remain visible)
 
 ## Installation
 ```bash

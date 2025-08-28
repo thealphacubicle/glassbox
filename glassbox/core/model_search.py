@@ -24,6 +24,7 @@ class ModelSearch:
         tracking: str | None = None,
         enable_gpu: bool = False,
         verbose: bool = False,
+        show_progress: bool = True,
     ) -> None:
         self.model = model
         self.searcher = search
@@ -31,6 +32,7 @@ class ModelSearch:
         self.tracker = WandbTracker() if tracking == "wandb" else None
         self.enable_gpu = enable_gpu
         self.verbose = verbose
+        self.show_progress = show_progress
         self.plugin_manager = PluginManager()
         for plugin in plugins or [Plugin()]:
             self.plugin_manager.register(plugin)
@@ -54,7 +56,7 @@ class ModelSearch:
             X,
             y,
             evaluator=self.evaluator,
-            show_progress=self.verbose,
+            show_progress=self.show_progress,
             plugin_manager=self.plugin_manager,
         )
         for res in results:

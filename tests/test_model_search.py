@@ -24,6 +24,23 @@ def test_model_search_runs():
     assert model.score(X_test, y_test) >= 0
 
 
+def test_progress_shown_without_verbose(capsys):
+    X, y = load_iris(return_X_y=True)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    ms = ModelSearch(
+        LogisticRegression(max_iter=50),
+        Search("grid", SEARCH_SPACE),
+        SklearnEvaluator(),
+        verbose=False,
+    )
+    ms.search(X_train, y_train)
+    captured = capsys.readouterr()
+    # progress bars write to stderr
+    assert "grid Search" in captured.err
+    assert "Grid trial" not in captured.out
+    assert "Grid trial" not in captured.err
+
+
 def test_model_search_gpu_guard(monkeypatch, capsys):
     monkeypatch.setattr(ms_module, "is_gpu_available", lambda: False)
     with pytest.raises(RuntimeError):
