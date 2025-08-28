@@ -10,3 +10,5 @@ except PackageNotFoundError:  # pragma: no cover - fallback for local usage
     __version__ = "0.0.0"
 
 __all__ = ["ModelSearch", "__version__"]
+
+# (Leave empty or add package-level imports)
