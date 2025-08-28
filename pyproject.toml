@@ -7,11 +7,11 @@ dependencies = [
     "scikit-learn",
     "numpy",
     "pandas",
-    "tqdm"
+    "tqdm",
+    "pydantic",
 ]
 
 [project.optional-dependencies]
 gpu = ["xgboost", "lightgbm", "torch"]
 wandb = ["wandb"]
-ui = ["reflex"]
 optuna = ["optuna"]

@@ -1,5 +1,5 @@
 """Glassbox package initialization."""
 
-from .core.tuner import ModelTuner
+from .core.model_search import ModelSearch
 
-__all__ = ["ModelTuner"]
+__all__ = ["ModelSearch"]

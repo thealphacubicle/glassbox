@@ -1,8 +1,6 @@
 """Unified logging for the Glassbox package."""
 from __future__ import annotations
 
-import json
-import os
 from typing import Iterable, List
 
 
@@ -11,23 +9,15 @@ class GlassboxLogger:
 
     def __init__(
         self,
-        use_dashboard: bool = False,
         use_wandb: bool = False,
-        state_path: str = "dashboard_state.json",
+        verbose: bool = True,
     ) -> None:
-        self.use_dashboard = use_dashboard
         self.use_wandb = use_wandb
-        self.state_path = state_path
-        self._dashboard_server = None
+        self.verbose = verbose
 
-        if self.use_dashboard:
-            try:  # pragma: no cover - optional dependency
-                from .ui.dashboard import DashboardServer
-
-                self._dashboard_server = DashboardServer(state_path=self.state_path)
-                self._dashboard_server.run()
-            except Exception:  # missing optional deps or runtime error
-                self.use_dashboard = False
+    def set_verbose(self, verbose: bool) -> None:
+        """Globally enable or disable non-error logging."""
+        self.verbose = verbose
 
     def log(self, message: str, level: str = "info", to: Iterable[str] | None = None) -> None:
         """Log a message to the selected destinations.
@@ -40,9 +30,13 @@ class GlassboxLogger:
             Log level as a string. Currently unused but reserved for future
             enhancements.
         to:
-            Iterable of destinations. Supported values: ``"console"``,
-            ``"wandb"``, ``"dashboard"``.
+            Iterable of destinations. Supported values: ``"console"`` or
+            ``"wandb"``.
         """
+
+        # Skip non-error logs when verbosity is disabled
+        if not self.verbose and level.lower() != "error":
+            return
 
         destinations: List[str] = list(to) if to is not None else ["console"]
 
@@ -57,30 +51,5 @@ class GlassboxLogger:
             except Exception:
                 pass
 
-        if "dashboard" in destinations and self.use_dashboard:
-            self.log_to_dashboard(message, level=level)
 
-    def log_to_dashboard(self, message: str, level: str = "info") -> None:
-        """Persist log messages for the dashboard server.
-
-        Messages are appended to a JSON file that the :class:`DashboardServer`
-        reads and visualises in real time. Any errors are silently ignored so
-        that logging never interrupts training.
-        """
-
-        entry = {"message": message, "level": level}
-        try:
-            data: List[dict] = []
-            if os.path.exists(self.state_path):
-                with open(self.state_path) as f:
-                    existing = json.load(f)
-                    if isinstance(existing, list):
-                        data = existing
-            data.append(entry)
-            with open(self.state_path, "w") as f:
-                json.dump(data, f)
-        except Exception:
-            pass
-
-
-logger = GlassboxLogger(use_dashboard=True, use_wandb=True)
+logger = GlassboxLogger(use_wandb=True)

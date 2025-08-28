@@ -2,10 +2,9 @@ scikit-learn
 numpy
 pandas
 tqdm
+pydantic
 xgboost
 lightgbm
 torch
 wandb
-reflex
 optuna
-streamlit
